@@ -1,8 +1,9 @@
 import scrapy
 import psycopg2
 from datetime import datetime
+import logging
 import re
-from urllib.parse import urlencode, parse_qs, urlparse
+from urllib.parse import urljoin, urlencode, parse_qs, urlparse
 
 
 class AutoriaSpider(scrapy.Spider):
@@ -111,12 +112,17 @@ class AutoriaSpider(scrapy.Spider):
                 default='0')
             odometer = int(''.join(filter(str.isdigit, odometer_raw))) * 1000
 
+            # Новый вариант парсинга имени для компании
             username = response.css(
-                'div.seller_info_name a.sellerPro::text').get(
+                'div.seller_info_area h4.seller_info_name a::text').get(
                 default='').strip()
             if not username:
-                username = response.css('div.seller_info_name::text').get(
+                username = response.css(
+                    'div.seller_info_name a.sellerPro::text').get(
                     default='').strip()
+                if not username:
+                    username = response.css('div.seller_info_name::text').get(
+                        default='').strip()
 
             phone_script = response.css('script:contains("phone")::text').get()
             phone_number = ''
@@ -124,6 +130,9 @@ class AutoriaSpider(scrapy.Spider):
                 phone_match = re.search(r'\+380\d{9}', phone_script)
                 if phone_match:
                     phone_number = phone_match.group()
+                else:
+                    self.logger.warning(
+                        f"No phone number pattern found in script for URL: {url}")
 
             image_url = response.css(
                 'div.photo-620x465 picture img::attr(src)').get(default='')
