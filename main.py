@@ -5,8 +5,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
+from apscheduler.schedulers.blocking import BlockingScheduler
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,13 +19,11 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-
 def run_spider():
     logger.info("Starting scraping process")
     process = CrawlerProcess(get_project_settings())
     process.crawl('autoria_spider')
-    process.start()
-
+    process.start()  # Blocking call
 
 def create_db_dump():
     logger.info("Creating database dump")
@@ -48,6 +46,14 @@ def create_db_dump():
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to create database dump: {e}")
 
-
 if __name__ == "__main__":
-    run_spider()
+    scheduler = BlockingScheduler()
+
+    scraping_time = os.getenv('SCRAPING_TIME', '12:00')
+    scheduler.add_job(run_spider, 'cron', hour=int(scraping_time.split(':')[0]), minute=int(scraping_time.split(':')[1]))
+
+    dump_time = os.getenv('DUMP_TIME', '12:00')
+    scheduler.add_job(create_db_dump, 'cron', hour=int(dump_time.split(':')[0]), minute=int(dump_time.split(':')[1]))
+
+    logger.info(f"Scheduler started. Scraping at {scraping_time}, Dumping at {dump_time}")
+    scheduler.start()

@@ -15,6 +15,25 @@ services:
     networks:
       - autoria_network
 
+  scraper:
+    build: .
+    container_name: autoria_scraper
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=autoria
+      - POSTGRES_USER=autoria_user
+      - POSTGRES_PASSWORD=autoria_pass
+      - SCRAPING_TIME=12:00
+      - DUMP_TIME=12:00
+    volumes:
+      - ./dumps:/app/dumps
+      - ./scraper.log:/app/scraper.log
+    depends_on:
+      - db
+    networks:
+      - autoria_network
+
 networks:
   autoria_network:
     driver: bridge

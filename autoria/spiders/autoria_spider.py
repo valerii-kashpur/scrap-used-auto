@@ -1,10 +1,8 @@
 import scrapy
 import psycopg2
 from datetime import datetime
-import logging
 import re
-from urllib.parse import urljoin, urlencode, parse_qs, urlparse
-
+from urllib.parse import urlencode, parse_qs, urlparse
 
 class AutoriaSpider(scrapy.Spider):
     name = 'autoria_spider'
@@ -26,8 +24,7 @@ class AutoriaSpider(scrapy.Spider):
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
-        spider = super(AutoriaSpider, cls).from_crawler(crawler, *args,
-                                                        **kwargs)
+        spider = super(AutoriaSpider, cls).from_crawler(crawler, *args, **kwargs)
         spider.conn = psycopg2.connect(
             host=crawler.settings.get('POSTGRES_HOST'),
             port=crawler.settings.get('POSTGRES_PORT'),
@@ -66,18 +63,14 @@ class AutoriaSpider(scrapy.Spider):
 
     def parse(self, response):
         try:
-            car_links = response.css(
-                'div.content-bar a.m-link-ticket::attr(href)').getall()
-            self.logger.info(
-                f"Found {len(car_links)} car links on page: {response.url}")
+            car_links = response.css('div.content-bar a.m-link-ticket::attr(href)').getall()
+            self.logger.info(f"Found {len(car_links)} car links on page: {response.url}")
             for link in car_links:
                 yield response.follow(link, callback=self.parse_car)
 
-            next_page_disabled = response.css(
-                'a.page-link.js-next.disabled').get()
+            next_page_disabled = response.css('a.page-link.js-next.disabled').get()
             if next_page_disabled:
-                self.logger.info(
-                    "Next page button is disabled, stopping pagination")
+                self.logger.info("Next page button is disabled, stopping pagination")
                 return
 
             parsed_url = urlparse(response.url)
@@ -86,8 +79,7 @@ class AutoriaSpider(scrapy.Spider):
             next_page = current_page + 1
 
             params['page'] = [str(next_page)]
-            next_page_url = parsed_url._replace(
-                query=urlencode(params, doseq=True)).geturl()
+            next_page_url = parsed_url._replace(query=urlencode(params, doseq=True)).geturl()
             self.logger.info(f"Following next page: {next_page_url}")
             yield response.follow(next_page_url, callback=self.parse)
 
@@ -104,25 +96,17 @@ class AutoriaSpider(scrapy.Spider):
 
             title = response.css('h1.head::text').get(default='').strip()
 
-            price_usd = response.css('div.price_value strong::text').get(
-                default='0')
+            price_usd = response.css('div.price_value strong::text').get(default='0')
             price_usd = int(''.join(filter(str.isdigit, price_usd)))
 
-            odometer_raw = response.css('div.base-information span::text').get(
-                default='0')
+            odometer_raw = response.css('div.base-information span::text').get(default='0')
             odometer = int(''.join(filter(str.isdigit, odometer_raw))) * 1000
 
-            # Новый вариант парсинга имени для компании
-            username = response.css(
-                'div.seller_info_area h4.seller_info_name a::text').get(
-                default='').strip()
+            username = response.css('div.seller_info_area h4.seller_info_name a::text').get(default='').strip()
             if not username:
-                username = response.css(
-                    'div.seller_info_name a.sellerPro::text').get(
-                    default='').strip()
+                username = response.css('div.seller_info_name a.sellerPro::text').get(default='').strip()
                 if not username:
-                    username = response.css('div.seller_info_name::text').get(
-                        default='').strip()
+                    username = response.css('div.seller_info_name::text').get(default='').strip()
 
             phone_script = response.css('script:contains("phone")::text').get()
             phone_number = ''
@@ -131,30 +115,21 @@ class AutoriaSpider(scrapy.Spider):
                 if phone_match:
                     phone_number = phone_match.group()
                 else:
-                    self.logger.warning(
-                        f"No phone number pattern found in script for URL: {url}")
+                    self.logger.warning(f"No phone number pattern found in script for URL: {url}")
 
-            image_url = response.css(
-                'div.photo-620x465 picture img::attr(src)').get(default='')
+            image_url = response.css('div.photo-620x465 picture img::attr(src)').get(default='')
 
-            images_count_text = response.css(
-                'a.show-all.link-dotted::text').get(default='')
-            images_count = int(
-                re.search(r'\d+', images_count_text).group()) if re.search(
-                r'\d+', images_count_text) else 0
+            images_count_text = response.css('a.show-all.link-dotted::text').get(default='')
+            images_count = int(re.search(r'\d+', images_count_text).group()) if re.search(r'\d+', images_count_text) else 0
 
-            car_number = response.css('span.state-num::text').get(
-                default='').strip()
+            car_number = response.css('span.state-num::text').get(default='').strip()
 
-            car_vin = response.css('span.label-vin::text').get(
-                default='').strip()
+            car_vin = response.css('span.label-vin::text').get(default='').strip()
             if not car_vin:
-                car_vin_elements = response.css(
-                    'span.label-vin *::text').getall()
+                car_vin_elements = response.css('span.label-vin *::text').getall()
                 car_vin = ''.join(filter(None, car_vin_elements)).strip()
             if not car_vin:
-                car_vin = response.css('span.vin-code::text').get(
-                    default='').strip()
+                car_vin = response.css('span.vin-code::text').get(default='').strip()
 
             item = {
                 'url': url,
@@ -174,8 +149,7 @@ class AutoriaSpider(scrapy.Spider):
             yield item
 
         except Exception as e:
-            self.logger.error(
-                f"Error in parse_car for URL {response.url}: {str(e)}")
+            self.logger.error(f"Error in parse_car for URL {response.url}: {str(e)}")
 
     def save_to_db(self, item):
         insert_query = """
