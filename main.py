@@ -22,7 +22,9 @@ from utils.logger import logger
 
 def scrape_car_page(driver, url):
     try:
+        print(f"Navigating to {url}")
         driver.get(url)
+        print(f"Page {url} loaded after 1-second delay")
         data = {
             'url': url,
             'title': scrape_title(driver, url),
@@ -43,12 +45,17 @@ def scrape_car_page(driver, url):
         return None
 
 
+# Основная функция
 def main():
     try:
         chrome_options = Options()
-        # chrome_options.add_argument('--headless=new')
+        chrome_options.add_argument('--headless=new')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument(
+            'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
         driver = webdriver.Chrome(options=chrome_options)
         logger.info("Selenium driver initialized in headless mode")
 
