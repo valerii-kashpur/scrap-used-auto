@@ -11,11 +11,11 @@ load_dotenv()
 def init_database():
     try:
         conn = psycopg2.connect(
-            dbname=os.getenv('POSTGRES_DB'),
-            user=os.getenv('POSTGRES_USER'),
-            password=os.getenv('POSTGRES_PASSWORD'),
-            host=os.getenv('POSTGRES_HOST', 'db'),
-            port=os.getenv('POSTGRES_PORT')
+            dbname=os.getenv("POSTGRES_DB"),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            host=os.getenv("POSTGRES_HOST", "db"),
+            port=os.getenv("POSTGRES_PORT"),
         )
         cursor = conn.cursor()
 
@@ -50,17 +50,27 @@ def init_database():
 def insert_into_database(conn, data):
     try:
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO car_listings (
                 url, title, price_usd, odometer, username, phone_number,
                 image_url, images_count, car_number, car_vin, datetime_found
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            data['url'], data['title'], data['price_usd'], data['odometer'],
-            data['username'], data['phone_number'], data['image_url'],
-            data['images_count'], data['car_number'], data['car_vin'],
-            data['datetime_found']
-        ))
+        """,
+            (
+                data["url"],
+                data["title"],
+                data["price_usd"],
+                data["odometer"],
+                data["username"],
+                data["phone_number"],
+                data["image_url"],
+                data["images_count"],
+                data["car_number"],
+                data["car_vin"],
+                data["datetime_found"],
+            ),
+        )
         conn.commit()
         logger.info(f"Inserted data for {data['url']}")
     except Exception as e:

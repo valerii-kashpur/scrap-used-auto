@@ -24,17 +24,17 @@ def scrape_car_page(driver, url):
     try:
         driver.get(url)
         data = {
-            'url': url,
-            'title': scrape_title(driver, url),
-            'price_usd': scrape_price(driver, url),
-            'odometer': scrape_odometer(driver, url),
-            'username': scrape_username(driver, url),
-            'phone_number': scrape_phone_number(driver, url),
-            'image_url': scrape_image_url(driver, url),
-            'images_count': scrape_images_count(driver, url),
-            'car_number': scrape_car_number(driver, url),
-            'car_vin': scrape_car_vin(driver, url),
-            'datetime_found': datetime.now()
+            "url": url,
+            "title": scrape_title(driver, url),
+            "price_usd": scrape_price(driver, url),
+            "odometer": scrape_odometer(driver, url),
+            "username": scrape_username(driver, url),
+            "phone_number": scrape_phone_number(driver, url),
+            "image_url": scrape_image_url(driver, url),
+            "images_count": scrape_images_count(driver, url),
+            "car_number": scrape_car_number(driver, url),
+            "car_vin": scrape_car_vin(driver, url),
+            "datetime_found": datetime.now(),
         }
         logger.info(f"Scraped data for {url}: {data}")
         return data
@@ -47,8 +47,13 @@ def scrape_page(driver, conn, existing_urls, base_url, page_num):
     try:
         url = f"{base_url}&page={page_num}"
         driver.get(url)
-        urls = [a.get_attribute('href') for a in
-                driver.find_elements(By.XPATH, '//a[contains(@href, "/uk/auto_") and contains(@href, ".html")]')]
+        urls = [
+            a.get_attribute("href")
+            for a in driver.find_elements(
+                By.XPATH,
+                '//a[contains(@href, "/uk/auto_") and contains(@href, ".html")]',
+            )
+        ]
         logger.info(f"Found {len(urls)} listing URLs on page {page_num}")
 
         if not urls:
@@ -58,7 +63,11 @@ def scrape_page(driver, conn, existing_urls, base_url, page_num):
         for url in urls:
             if url not in existing_urls:
                 data = scrape_car_page(driver, url)
-                if data and any(value is not None for key, value in data.items() if key != 'datetime_found'):
+                if data and any(
+                    value is not None
+                    for key, value in data.items()
+                    if key != "datetime_found"
+                ):
                     insert_into_database(conn, data)
                     existing_urls.add(url)
 
@@ -70,14 +79,17 @@ def scrape_page(driver, conn, existing_urls, base_url, page_num):
 def main():
     try:
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument(
-            'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        )
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()), options=chrome_options
+        )
         logger.info("Selenium driver initialized in headless mode")
 
         conn, existing_urls = init_database()
@@ -93,9 +105,9 @@ def main():
         logger.info("Database dump completed")
     except Exception as e:
         logger.error(f"Error in main function: {e}")
-        if 'driver' in locals():
+        if "driver" in locals():
             driver.quit()
-        if 'conn' in locals():
+        if "conn" in locals():
             conn.close()
 
 
