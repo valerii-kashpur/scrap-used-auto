@@ -1,23 +1,12 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15
-    container_name: autoria_db
-    environment:
-      - POSTGRES_DB=autoria
-      - POSTGRES_USER=autoria_user
-      - POSTGRES_PASSWORD=autoria_pass
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - autoria_network
-
-  scraper:
-    build: .
-    container_name: autoria_scraper
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
@@ -25,18 +14,27 @@ services:
       - POSTGRES_USER=autoria_user
       - POSTGRES_PASSWORD=autoria_pass
       - SCRAPING_TIME=12:00
-      - DUMP_TIME=12:00
     volumes:
-      - ./dumps:/app/dumps
-      - ./scraper.log:/app/scraper.log
-    depends_on:
-      - db
+      - .:/app
     networks:
-      - autoria_network
+      - app-network
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: autoria
+      POSTGRES_USER: autoria_user
+      POSTGRES_PASSWORD: autoria_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 networks:
-  autoria_network:
+  app-network:
     driver: bridge
 
 volumes:
-  db_data:
+  db-data:
